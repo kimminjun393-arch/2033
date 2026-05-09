@@ -2,174 +2,105 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>서울 2033 클론 프로젝트</title>
+    <title>생존 2090 </title>
     <style>
-        body { 
-            background-color: #121212; 
-            color: #e0e0e0; 
-            font-family: 'Malgun Gothic', sans-serif; 
-            display: flex; 
-            justify-content: center; 
-            padding: 20px; 
-        }
-        #game-container { 
-            width: 100%; 
-            max-width: 500px; 
-            border: 1px solid #444; 
-            padding: 20px; 
-            border-radius: 8px; 
-            background-color: #1e1e1e; 
-        }
-        .stats { 
-            border-bottom: 1px solid #444; 
-            padding-bottom: 10px; 
-            margin-bottom: 20px; 
-            line-height: 1.8;
-        }
-        .stat-line {
-            display: flex;
-            justify-content: space-between;
-            font-weight: bold;
-        }
-        #event-text { 
-            min-height: 120px; 
-            line-height: 1.6; 
-            font-size: 1.1em; 
-            margin-bottom: 20px; 
-        }
-        .choice-btn { 
-            display: block; 
-            width: 100%; 
-            padding: 12px; 
-            margin-bottom: 10px; 
-            background-color: #333; 
-            color: #fff; 
-            border: 1px solid #555; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            text-align: left; 
-            font-size: 1em; 
-            transition: 0.2s; 
-        }
+        body { background-color: #121212; color: #e0e0e0; font-family: 'Malgun Gothic', sans-serif; display: flex; justify-content: center; padding: 20px; }
+        #game-container { width: 100%; max-width: 550px; border: 1px solid #444; padding: 20px; border-radius: 8px; background-color: #1e1e1e; }
+        .stats { border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 20px; line-height: 1.8; }
+        .stat-line { display: flex; justify-content: space-between; font-weight: bold; }
+        #event-text { min-height: 120px; line-height: 1.6; font-size: 1.1em; margin-bottom: 20px; }
+        .choice-btn { display: block; width: 100%; padding: 12px; margin-bottom: 10px; background-color: #333; color: #fff; border: 1px solid #555; border-radius: 4px; cursor: pointer; text-align: left; font-size: 1em; transition: 0.2s; }
         .choice-btn:hover:not(:disabled) { background-color: #555; }
-        .choice-btn:disabled {
-            background-color: #222;
-            color: #666;
-            cursor: not-allowed;
-            border-color: #333;
-        }
+        .choice-btn:disabled { background-color: #222; color: #666; cursor: not-allowed; border-color: #333; }
+        .log { color: #aaa; font-size: 0.9em; margin-top: 10px; }
     </style>
 </head>
 <body>
     <div id="game-container">
         <div class="stats">
             <div class="stat-line">
-                <span>❤️ 체력: <span id="hp">3</span></span>
-                <span>🧠 멘탈: <span id="mental">3</span></span>
-                <span>💰 돈: <span id="money">0</span></span>
+                <span>❤️ 체력: <span id="hp">5</span></span>
+                <span>🧠 멘탈: <span id="mental">5</span></span>
+                <span>💰 돈: <span id="money">3</span></span>
             </div>
             <div class="stat-line" style="color: #4caf50; margin-top: 5px;">
                 <span>🌟 능력: <span id="abilities">없음</span></span>
             </div>
         </div>
-        
         <div id="event-text">로딩 중...</div>
-        
         <div id="choices"></div>
     </div>
 
     <script>
-        // 1. 플레이어 상태
-        let player = {
-            hp: 3,
-            mental: 3,
-            money: 0,
-            abilities: [] // 예: "관찰력", "웅변", "야간 시력"
-        };
+        let player = { hp: 5, mental: 5, money: 3, abilities: [] };
 
-        // 2. 스토리 데이터 (능력 조건 추가)
+        // 헬퍼 함수: 체력/멘탈/돈 증감
+        function changeStat(type, amount) {
+            player[type] += amount;
+        }
+
         const story = {
             "start": {
-                text: "당신은 방사능 폐허 속에서 눈을 떴습니다. 생존을 위해 어떤 기술을 기억해 내시겠습니까?",
+                text: "방사능 낙진이 멈춘 서울. 벙커 문이 열렸습니다. 당신은 생존을 위해 어떤 두 가지 특기를 챙기시겠습니까? (2번 선택)",
                 choices: [
-                    { 
-                        text: "[관찰력]을 선택한다.", 
-                        action: () => { player.abilities.push("관찰력"); }, 
-                        next: "random_encounter" 
-                    },
-                    { 
-                        text: "[야간 시력]을 선택한다.", 
-                        action: () => { player.abilities.push("야간 시력"); }, 
-                        next: "random_encounter" 
-                    }
+                    { text: "[관찰력]을 배운다", action: () => { player.abilities.push("관찰력"); }, next: "start_2" },
+                    { text: "[자물쇠 따기]를 배운다", action: () => { player.abilities.push("자물쇠 따기"); }, next: "start_2" },
+                    { text: "[권총]을 챙긴다", action: () => { player.abilities.push("권총"); }, next: "start_2" },
+                    { text: "[웅변]을 배운다", action: () => { player.abilities.push("웅변"); }, next: "start_2" },
+                    { text: "[응급처치]를 배운다", action: () => { player.abilities.push("응급처치"); }, next: "start_2" }
+                ]
+            },
+            "start_2": {
+                text: "하나 더 선택하세요.",
+                choices: [
+                    { text: "[야간 시력]을 배운다", action: () => { player.abilities.push("야간 시력"); }, next: "random_encounter" },
+                    { text: "[식물학]을 배운다", action: () => { player.abilities.push("식물학"); }, next: "random_encounter" },
+                    { text: "[기계공학]을 배운다", action: () => { player.abilities.push("기계공학"); }, next: "random_encounter" },
+                    { text: "[역사학]을 배운다", action: () => { player.abilities.push("역사학"); }, next: "random_encounter" }
                 ]
             },
             
-            // 랜덤 인카운터 1: 골목길 불량배
-            "encounter_thug": {
-                text: "골목길에서 험악하게 생긴 불량배가 길을 막아섭니다. \"가진 거 다 내놔!\"",
-                choices: [
-                    { 
-                        text: "순순히 돈을 준다. (돈 -1)", 
-                        reqMoney: 1, // 돈이 1 이상 있어야 선택 가능
-                        action: () => { player.money -= 1; },
-                        next: "random_encounter" 
-                    },
-                    { 
-                        text: "어두운 곳으로 빠르게 도망친다. [필요: 야간 시력]", 
-                        reqAbility: "야간 시력", // 야간 시력이 있어야 활성화됨
-                        next: "random_encounter" 
-                    },
-                    { 
-                        text: "맨몸으로 싸운다. (체력 -1)", 
-                        action: () => { player.hp -= 1; player.money += 1; }, // 이기면 돈을 얻지만 체력 감소
-                        next: "random_encounter" 
-                    }
-                ]
-            },
-
-            // 랜덤 인카운터 2: 버려진 자판기
-            "encounter_vending": {
-                text: "버려진 자판기를 발견했습니다. 밑에 동전이 떨어져 있을지도 모릅니다.",
-                choices: [
-                    { 
-                        text: "자세히 살펴본다. [필요: 관찰력]", 
-                        reqAbility: "관찰력",
-                        action: () => { player.money += 2; }, // 관찰력이 있으면 돈 발견
-                        next: "vending_success" 
-                    },
-                    { 
-                        text: "그냥 지나친다.", 
-                        next: "random_encounter" 
-                    }
-                ]
-            },
-
-            "vending_success": {
-                text: "구석에 떨어진 동전 2개를 발견했습니다! (돈 +2)",
-                choices: [
-                    { text: "계속 길을 간다.", next: "random_encounter" }
-                ]
-            },
+            // --- 30개의 랜덤 인카운터 데이터베이스 ---
+            "e1": { text: "갑자기 하늘이 노랗게 변하더니 방사능 비가 쏟아집니다!", choices: [ { text: "비옷을 입는다. [필요: 비옷]", reqAbility: "비옷", next: "random_encounter" }, { text: "그냥 맞으며 뛰어간다. (체력 -1)", action: () => changeStat('hp', -1), next: "random_encounter" } ] },
+            "e2": { text: "버려진 편의점 구석에 굳게 닫힌 금고가 있습니다.", choices: [ { text: "자물쇠를 딴다. [필요: 자물쇠 따기]", reqAbility: "자물쇠 따기", action: () => changeStat('money', 3), next: "random_encounter" }, { text: "무시하고 지나간다.", next: "random_encounter" } ] },
+            "e3": { text: "어두운 골목, 불량배 3명이 길을 막습니다. \"가진 거 다 내놔.\"", choices: [ { text: "권총을 꺼내 위협한다. [필요: 권총]", reqAbility: "권총", next: "random_encounter" }, { text: "돈을 뺏긴다. (돈 -2)", action: () => changeStat('money', -2), next: "random_encounter" } ] },
+            "e4": { text: "낡은 서점을 발견했습니다. 먼지 쌓인 책들이 가득합니다.", choices: [ { text: "역사책을 읽으며 마음을 달랜다. [필요: 역사학]", reqAbility: "역사학", action: () => changeStat('mental', 2), next: "random_encounter" }, { text: "그냥 나간다.", next: "random_encounter" } ] },
+            "e5": { text: "돌연변이 쥐 떼가 당신의 가방을 노리고 달려듭니다!", choices: [ { text: "총으로 쏴버린다. [필요: 권총]", reqAbility: "권총", next: "random_encounter" }, { text: "도망치다 물린다. (체력 -1)", action: () => changeStat('hp', -1), next: "random_encounter" } ] },
+            "e6": { text: "숲길에서 기묘하게 빛나는 파란 버섯을 발견했습니다.", choices: [ { text: "독버섯인지 확인한다. [필요: 식물학]", reqAbility: "식물학", next: "random_encounter" }, { text: "배가 고프니 일단 먹는다. (체력 -1)", action: () => changeStat('hp', -1), next: "random_encounter" } ] },
+            "e7": { text: "부상당한 여행객이 피를 흘리며 쓰러져 있습니다.", choices: [ { text: "상처를 치료해 준다. [필요: 응급처치]", reqAbility: "응급처치", action: () => changeStat('money', 2), next: "random_encounter" }, { text: "외면한다. (멘탈 -1)", action: () => changeStat('mental', -1), next: "random_encounter" } ] },
+            "e8": { text: "하얀 로브를 입은 사이비 종교인들이 다가와 입교를 권유합니다.", choices: [ { text: "말로 그들을 논파한다. [필요: 웅변]", reqAbility: "웅변", next: "random_encounter" }, { text: "계속 시달리다 기가 빨린다. (멘탈 -1)", action: () => changeStat('mental', -1), next: "random_encounter" } ] },
+            "e9": { text: "바닥에 낙엽으로 교묘하게 가려진 곰덫이 있습니다.", choices: [ { text: "덫을 간파하고 피해 간다. [필요: 관찰력]", reqAbility: "관찰력", next: "random_encounter" }, { text: "덫에 발목이 찍힌다! (체력 -2)", action: () => changeStat('hp', -2), next: "random_encounter" } ] },
+            "e10": { text: "부서진 오토바이가 길가에 버려져 있습니다. 고치면 쓸 수 있을까요?", choices: [ { text: "엔진을 수리한다. [필요: 기계공학]", reqAbility: "기계공학", action: () => player.abilities.push("오토바이"), next: "random_encounter" }, { text: "포기한다.", next: "random_encounter" } ] },
+            "e11": { text: "밤이 깊었습니다. 칠흑 같은 어둠 속에서 무언가 바스락거립니다.", choices: [ { text: "어둠 속을 꿰뚫어 본다. [필요: 야간 시력]", reqAbility: "야간 시력", next: "random_encounter" }, { text: "겁에 질려 밤을 샌다. (멘탈 -1)", action: () => changeStat('mental', -1), next: "random_encounter" } ] },
+            "e12": { text: "떠돌이 상인이 다가옵니다. \"우비를 하나 사시겠소?\"", choices: [ { text: "우비를 산다. (돈 -2)", reqMoney: 2, action: () => { changeStat('money', -2); player.abilities.push("비옷"); }, next: "random_encounter" }, { text: "거절한다.", next: "random_encounter" } ] },
+            "e13": { text: "가슴에 빨간 레이저가 조준되었습니다. 저격수입니다!", choices: [ { text: "오토바이를 타고 빠르게 이탈한다. [필요: 오토바이]", reqAbility: "오토바이", next: "random_encounter" }, { text: "어깨에 총을 맞는다. (체력 -2)", action: () => changeStat('hp', -2), next: "random_encounter" } ] },
+            "e14": { text: "버려진 자판기 밑에 동전이 떨어져 있을지도 모릅니다.", choices: [ { text: "밑을 뒤져본다. [필요: 관찰력]", reqAbility: "관찰력", action: () => changeStat('money', 1), next: "random_encounter" }, { text: "지나친다.", next: "random_encounter" } ] },
+            "e15": { text: "황혼이 질 무렵, 부서진 남산타워 위로 노을이 예쁘게 지고 있습니다.", choices: [ { text: "경치를 감상한다. (멘탈 +1)", action: () => changeStat('mental', 1), next: "random_encounter" } ] },
+            "e16": { text: "누군가 버리고 간 통기타를 발견했습니다. 줄은 멀쩡합니다.", choices: [ { text: "기타를 쳐본다. (멘탈 +1)", action: () => changeStat('mental', 1), next: "random_encounter" } ] },
+            "e17": { text: "버려진 군사 초소입니다. 탄약통이 굳게 잠겨있습니다.", choices: [ { text: "자물쇠를 딴다. [필요: 자물쇠 따기]", reqAbility: "자물쇠 따기", action: () => changeStat('money', 2), next: "random_encounter" }, { text: "지나간다.", next: "random_encounter" } ] },
+            "e18": { text: "들개 한 마리가 꼬리를 치며 다가옵니다.", choices: [ { text: "통조림을 준다. (돈 -1)", reqMoney: 1, action: () => { changeStat('money', -1); player.abilities.push("강아지"); }, next: "random_encounter" }, { text: "무시한다.", next: "random_encounter" } ] },
+            "e19": { text: "배고픈 거지가 구걸을 합니다.", choices: [ { text: "적선을 한다. (돈 -1)", reqMoney: 1, action: () => { changeStat('money', -1); changeStat('mental', 1); }, next: "random_encounter" }, { text: "외면한다.", next: "random_encounter" } ] },
+            "e20": { text: "건물에서 불이 났습니다! 안에 생존자가 있는 것 같습니다.", choices: [ { text: "뛰어들어가 구출한다. (체력 -1, 멘탈 +2)", action: () => { changeStat('hp', -1); changeStat('mental', 2); }, next: "random_encounter" }, { text: "어쩔 수 없다. (멘탈 -1)", action: () => changeStat('mental', -1), next: "random_encounter" } ] },
+            "e21": { text: "이상한 노인이 알 수 없는 철학적인 질문을 던집니다.", choices: [ { text: "웅변으로 맞받아친다. [필요: 웅변]", reqAbility: "웅변", action: () => changeStat('mental', 1), next: "random_encounter" }, { text: "이해하지 못해 두통이 온다. (멘탈 -1)", action: () => changeStat('mental', -1), next: "random_encounter" } ] },
+            "e22": { text: "오래된 구급상자를 발견했습니다.", choices: [ { text: "내용물을 확인한다. (체력 +1)", action: () => changeStat('hp', 1), next: "random_encounter" } ] },
+            "e23": { text: "지하철역 입구입니다. 아주 어둡고 냄새가 납니다.", choices: [ { text: "야간 시력으로 안전하게 탐색한다. [필요: 야간 시력]", reqAbility: "야간 시력", action: () => changeStat('money', 2), next: "random_encounter" }, { text: "안 들어가는 게 상책이다.", next: "random_encounter" } ] },
+            "e24": { text: "길에 시체가 쓰러져 있습니다.", choices: [ { text: "품을 뒤진다. (돈 +1, 멘탈 -1)", action: () => { changeStat('money', 1); changeStat('mental', -1); }, next: "random_encounter" }, { text: "명복을 빌어준다. (멘탈 +1)", action: () => changeStat('mental', 1), next: "random_encounter" } ] },
+            "e25": { text: "정체를 알 수 없는 야바위꾼이 게임을 제안합니다.", choices: [ { text: "돈을 건다. (돈 -1)", reqMoney: 1, action: () => changeStat('money', -1), next: "random_encounter" }, { text: "사기꾼 냄새가 난다. [필요: 관찰력]", reqAbility: "관찰력", next: "random_encounter" } ] },
+            "e26": { text: "길을 걷다 유독성 가스가 새어 나오는 구역을 지납니다.", choices: [ { text: "강아지가 먼저 냄새를 맡고 길을 우회합니다! [필요: 강아지]", reqAbility: "강아지", next: "random_encounter" }, { text: "가스를 마시고 기침을 합니다. (체력 -1)", action: () => changeStat('hp', -1), next: "random_encounter" } ] },
+            "e27": { text: "낡은 라디오를 주웠습니다. 잡음만 들립니다.", choices: [ { text: "회로를 고쳐 주파수를 맞춘다. [필요: 기계공학]", reqAbility: "기계공학", action: () => changeStat('mental', 2), next: "random_encounter" }, { text: "버린다.", next: "random_encounter" } ] },
+            "e28": { text: "유통기한이 10년 지난 통조림을 발견했습니다.", choices: [ { text: "눈 딱 감고 먹는다. (체력 -1)", action: () => changeStat('hp', -1), next: "random_encounter" }, { text: "버린다.", next: "random_encounter" } ] },
+            "e29": { text: "서울 자경단이 통행료를 요구합니다.", choices: [ { text: "웅변으로 설득해 무사 통과한다. [필요: 웅변]", reqAbility: "웅변", next: "random_encounter" }, { text: "통행료를 낸다. (돈 -1)", reqMoney: 1, action: () => changeStat('money', -1), next: "random_encounter" } ] },
+            "e30": { text: "따뜻한 모닥불을 피운 생존자 무리를 만났습니다.", choices: [ { text: "함께 불을 쬐며 피로를 푼다. (체력 +1, 멘탈 +1)", action: () => { changeStat('hp', 1); changeStat('mental', 1); }, next: "random_encounter" } ] },
 
             "game_over": {
-                text: "당신은 쓰러졌습니다... 폐허의 거름이 되었습니다.",
-                choices: [
-                    {
-                        text: "다시 태어나기",
-                        action: () => {
-                            player = { hp: 3, mental: 3, money: 0, abilities: [] };
-                        },
-                        next: "start"
-                    }
-                ]
+                text: "당신은 쓰러졌습니다... 폐허의 거름이 되었습니다. (새로고침을 눌러 다시 시작하세요.)",
+                choices: []
             }
         };
 
-        // 랜덤 인카운터 목록
-        const randomEvents = ["encounter_thug", "encounter_vending"];
+        // e1부터 e30까지의 키값을 배열로 생성
+        const randomEvents = Array.from({length: 30}, (_, i) => `e${i + 1}`);
 
-        // UI 업데이트
         function updateUI() {
             document.getElementById("hp").innerText = player.hp;
             document.getElementById("mental").innerText = player.mental;
@@ -177,9 +108,8 @@
             document.getElementById("abilities").innerText = player.abilities.length > 0 ? player.abilities.join(", ") : "없음";
         }
 
-        // 씬 이동 로직
         function goToScene(sceneId) {
-            // 체력/멘탈 체크
+            // 사망 체크
             if (player.hp <= 0 || player.mental <= 0) sceneId = "game_over"; 
             
             // 랜덤 인카운터 처리
@@ -197,19 +127,9 @@
                 const btn = document.createElement("button");
                 btn.className = "choice-btn";
                 
-                // 1. 능력(Ability) 조건 검사
-                let hasAbility = true;
-                if (choice.reqAbility && !player.abilities.includes(choice.reqAbility)) {
-                    hasAbility = false;
-                }
+                let hasAbility = !choice.reqAbility || player.abilities.includes(choice.reqAbility);
+                let hasMoney = !choice.reqMoney || player.money >= choice.reqMoney;
 
-                // 2. 재화(Money) 조건 검사
-                let hasMoney = true;
-                if (choice.reqMoney && player.money < choice.reqMoney) {
-                    hasMoney = false;
-                }
-
-                // 조건 불충족 시 버튼 비활성화 처리
                 if (!hasAbility || !hasMoney) {
                     btn.disabled = true;
                     btn.innerText = "🔒 " + choice.text;
@@ -221,7 +141,6 @@
                         goToScene(choice.next);
                     };
                 }
-                
                 choicesDiv.appendChild(btn);
             });
         }
