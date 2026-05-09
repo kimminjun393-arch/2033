@@ -28,6 +28,8 @@
     <div id="game-container">
         <div class="stats">
             <div class="stat-line">
+                <span>⏳ 생존일: <span id="turn">1</span>일</span>
+                
                 <span>❤️ 체력: <span id="hp">5</span></span>
                 <span>🧠 멘탈: <span id="mental">5</span></span>
                 <span>💰 돈: <span id="money">3</span></span>
@@ -52,8 +54,7 @@
 
     <script>
         // 1. 플레이어 데이터 (인벤토리 분리)
-        let player = { hp: 5, mental: 5, money: 3, abilities: [], inventory: [] };
-
+        let player = { hp: 5, mental: 5, money: 3, abilities: [], inventory: [], turn: 1 };
         function changeStat(type, amount) {
             player[type] += amount;
             if(player.hp > 10) player.hp = 10; // 최대치 제한
@@ -204,6 +205,7 @@
             document.getElementById("mental").innerText = player.mental;
             document.getElementById("money").innerText = player.money;
             document.getElementById("abilities").innerText = player.abilities.length > 0 ? player.abilities.join(", ") : "없음";
+            document.getElementById("turn").innerText = player.turn;
             renderBag(); // UI 업데이트 시 가방 내용도 갱신
         }
 
@@ -254,6 +256,9 @@
             if (player.hp <= 0 || player.mental <= 0) sceneId = "game_over"; 
             
             if (sceneId === "random_encounter") {
+                // 👇 랜덤 이벤트로 넘어갈 때마다 생존일 1일 추가!
+                player.turn += 1; 
+                
                 const randomIndex = Math.floor(Math.random() * randomEvents.length);
                 sceneId = randomEvents[randomIndex];
             }
