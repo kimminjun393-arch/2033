@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>서울 2033 클론 프로젝트</title>
+    <style>
+        body { 
+            background-color: #121212; 
+            color: #e0e0e0; 
+            font-family: 'Malgun Gothic', sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            padding: 20px; 
+        }
+        #game-container { 
+            width: 100%; 
+            max-width: 500px; 
+            border: 1px solid #444; 
+            padding: 20px; 
+            border-radius: 8px; 
+            background-color: #1e1e1e; 
+        }
+        .stats { 
+            border-bottom: 1px solid #444; 
+            padding-bottom: 10px; 
+            margin-bottom: 20px; 
+            line-height: 1.8;
+        }
+        .stat-line {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+        }
+        #event-text { 
+            min-height: 120px; 
+            line-height: 1.6; 
+            font-size: 1.1em; 
+            margin-bottom: 20px; 
+        }
+        .choice-btn { 
+            display: block; 
+            width: 100%; 
+            padding: 12px; 
+            margin-bottom: 10px; 
+            background-color: #333; 
+            color: #fff; 
+            border: 1px solid #555; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            text-align: left; 
+            font-size: 1em; 
+            transition: 0.2s; 
+        }
+        .choice-btn:hover:not(:disabled) { background-color: #555; }
+        .choice-btn:disabled {
+            background-color: #222;
+            color: #666;
+            cursor: not-allowed;
+            border-color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div class="stats">
+            <div class="stat-line">
+                <span>❤️ 체력: <span id="hp">3</span></span>
+                <span>🧠 멘탈: <span id="mental">3</span></span>
+                <span>💰 돈: <span id="money">0</span></span>
+            </div>
+            <div class="stat-line" style="color: #4caf50; margin-top: 5px;">
+                <span>🌟 능력: <span id="abilities">없음</span></span>
+            </div>
+        </div>
+        
+        <div id="event-text">로딩 중...</div>
+        
+        <div id="choices"></div>
+    </div>
+
+    <script>
+        // 1. 플레이어 상태
+        let player = {
+            hp: 3,
+            mental: 3,
+            money: 0,
+            abilities: [] // 예: "관찰력", "웅변", "야간 시력"
+        };
+
+        // 2. 스토리 데이터 (능력 조건 추가)
+        const story = {
+            "start": {
+                text: "당신은 방사능 폐허 속에서 눈을 떴습니다. 생존을 위해 어떤 기술을 기억해 내시겠습니까?",
+                choices: [
+                    { 
+                        text: "[관찰력]을 선택한다.", 
+                        action: () => { player.abilities.push("관찰력"); }, 
+                        next: "random_encounter" 
+                    },
+                    { 
+                        text: "[야간 시력]을 선택한다.", 
+                        action: () => { player.abilities.push("야간 시력"); }, 
+                        next: "random_encounter" 
+                    }
+                ]
+            },
+            
+            // 랜덤 인카운터 1: 골목길 불량배
+            "encounter_thug": {
+                text: "골목길에서 험악하게 생긴 불량배가 길을 막아섭니다. \"가진 거 다 내놔!\"",
+                choices: [
+                    { 
+                        text: "순순히 돈을 준다. (돈 -1)", 
+                        reqMoney: 1, // 돈이 1 이상 있어야 선택 가능
+                        action: () => { player.money -= 1; },
+                        next: "random_encounter" 
+                    },
+                    { 
+                        text: "어두운 곳으로 빠르게 도망친다. [필요: 야간 시력]", 
+                        reqAbility: "야간 시력", // 야간 시력이 있어야 활성화됨
+                        next: "random_encounter" 
+                    },
+                    { 
+                        text: "맨몸으로 싸운다. (체력 -1)", 
+                        action: () => { player.hp -= 1; player.money += 1; }, // 이기면 돈을 얻지만 체력 감소
+                        next: "random_encounter" 
+                    }
+                ]
+            },
+
+            // 랜덤 인카운터 2: 버려진 자판기
+            "encounter_vending": {
+                text: "버려진 자판기를 발견했습니다. 밑에 동전이 떨어져 있을지도 모릅니다.",
+                choices: [
+                    { 
+                        text: "자세히 살펴본다. [필요: 관찰력]", 
+                        reqAbility: "관찰력",
+                        action: () => { player.money += 2; }, // 관찰력이 있으면 돈 발견
+                        next: "vending_success" 
+                    },
+                    { 
+                        text: "그냥 지나친다.", 
+                        next: "random_encounter" 
+                    }
+                ]
+            },
+
+            "vending_success": {
+                text: "구석에 떨어진 동전 2개를 발견했습니다! (돈 +2)",
+                choices: [
+                    { text: "계속 길을 간다.", next: "random_encounter" }
+                ]
+            },
+
+            "game_over": {
+                text: "당신은 쓰러졌습니다... 폐허의 거름이 되었습니다.",
+                choices: [
+                    {
+                        text: "다시 태어나기",
+                        action: () => {
+                            player = { hp: 3, mental: 3, money: 0, abilities: [] };
+                        },
+                        next: "start"
+                    }
+                ]
+            }
+        };
+
+        // 랜덤 인카운터 목록
+        const randomEvents = ["encounter_thug", "encounter_vending"];
+
+        // UI 업데이트
+        function updateUI() {
+            document.getElementById("hp").innerText = player.hp;
+            document.getElementById("mental").innerText = player.mental;
+            document.getElementById("money").innerText = player.money;
+            document.getElementById("abilities").innerText = player.abilities.length > 0 ? player.abilities.join(", ") : "없음";
+        }
+
+        // 씬 이동 로직
+        function goToScene(sceneId) {
+            // 체력/멘탈 체크
+            if (player.hp <= 0 || player.mental <= 0) sceneId = "game_over"; 
+            
+            // 랜덤 인카운터 처리
+            if (sceneId === "random_encounter") {
+                const randomIndex = Math.floor(Math.random() * randomEvents.length);
+                sceneId = randomEvents[randomIndex];
+            }
+
+            const scene = story[sceneId];
+            document.getElementById("event-text").innerText = scene.text;
+            const choicesDiv = document.getElementById("choices");
+            choicesDiv.innerHTML = ""; 
+
+            scene.choices.forEach(choice => {
+                const btn = document.createElement("button");
+                btn.className = "choice-btn";
+                
+                // 1. 능력(Ability) 조건 검사
+                let hasAbility = true;
+                if (choice.reqAbility && !player.abilities.includes(choice.reqAbility)) {
+                    hasAbility = false;
+                }
+
+                // 2. 재화(Money) 조건 검사
+                let hasMoney = true;
+                if (choice.reqMoney && player.money < choice.reqMoney) {
+                    hasMoney = false;
+                }
+
+                // 조건 불충족 시 버튼 비활성화 처리
+                if (!hasAbility || !hasMoney) {
+                    btn.disabled = true;
+                    btn.innerText = "🔒 " + choice.text;
+                } else {
+                    btn.innerText = "▶ " + choice.text;
+                    btn.onclick = () => {
+                        if (choice.action) choice.action();
+                        updateUI();
+                        goToScene(choice.next);
+                    };
+                }
+                
+                choicesDiv.appendChild(btn);
+            });
+        }
+
+        updateUI();
+        goToScene("start");
+    </script>
+</body>
+</html>
